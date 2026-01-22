@@ -1,0 +1,31 @@
+{
+  "name": "october4-backend",
+  "version": "1.0.0",
+  "description": "October 4 Pet Food E-Commerce Backend API",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seedProducts.js",
+    "create-admin": "node src/scripts/createAdmin.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["pet-food", "ecommerce", "api", "mongodb", "express"],
+  "author": "October 4",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
