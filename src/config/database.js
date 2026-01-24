@@ -14,12 +14,12 @@ const connectDB = async () => {
   }
 };
 
-// Admin kullanıcısı yoksa oluştur
+// Admin kullanıcısı yoksa oluştur, varsa şifreyi güncelle
 const createAdminIfNotExists = async () => {
   try {
     const User = require('../models/User');
 
-    const existingAdmin = await User.findOne({ role: 'admin' });
+    const existingAdmin = await User.findOne({ email: 'admin@october4.com' });
 
     if (!existingAdmin) {
       const admin = new User({
@@ -33,11 +33,14 @@ const createAdminIfNotExists = async () => {
 
       await admin.save();
       console.log('✅ Admin kullanıcısı oluşturuldu');
-      console.log('📧 Email: admin@october4.com');
-      console.log('🔑 Şifre: October4Admin2026!');
     } else {
-      console.log('ℹ️  Admin kullanıcısı mevcut');
+      // Mevcut admin şifresini güncelle
+      existingAdmin.password = 'October4Admin2026!';
+      await existingAdmin.save();
+      console.log('✅ Admin şifresi güncellendi');
     }
+    console.log('📧 Email: admin@october4.com');
+    console.log('🔑 Şifre: October4Admin2026!');
   } catch (error) {
     console.error('Admin oluşturma hatası:', error.message);
   }
