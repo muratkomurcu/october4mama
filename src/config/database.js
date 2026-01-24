@@ -14,33 +14,28 @@ const connectDB = async () => {
   }
 };
 
-// Admin kullanıcısı yoksa oluştur, varsa şifreyi güncelle
+// Admin kullanıcısını sil ve yeniden oluştur
 const createAdminIfNotExists = async () => {
   try {
     const User = require('../models/User');
 
-    const existingAdmin = await User.findOne({ email: 'admin@october4.com' });
+    // Mevcut admini sil
+    await User.deleteOne({ email: 'admin@october4.com' });
 
-    if (!existingAdmin) {
-      const admin = new User({
-        fullName: 'October 4 Admin',
-        email: 'admin@october4.com',
-        password: 'October4Admin2026!',
-        phone: '05551234567',
-        address: 'Admin',
-        role: 'admin'
-      });
+    // Yeni admin oluştur
+    const admin = new User({
+      fullName: 'October 4 Admin',
+      email: 'admin@october4.com',
+      password: 'admin123',
+      phone: '05551234567',
+      address: 'Admin',
+      role: 'admin'
+    });
 
-      await admin.save();
-      console.log('✅ Admin kullanıcısı oluşturuldu');
-    } else {
-      // Mevcut admin şifresini güncelle
-      existingAdmin.password = 'October4Admin2026!';
-      await existingAdmin.save();
-      console.log('✅ Admin şifresi güncellendi');
-    }
+    await admin.save();
+    console.log('✅ Admin kullanıcısı oluşturuldu');
     console.log('📧 Email: admin@october4.com');
-    console.log('🔑 Şifre: October4Admin2026!');
+    console.log('🔑 Şifre: admin123');
   } catch (error) {
     console.error('Admin oluşturma hatası:', error.message);
   }
