@@ -19,8 +19,10 @@ connectDB();
 // Middleware'ler
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://october4mama.com.tr',
-  'https://www.october4mama.com.tr',
+  'https://october4mama.tr',
+  'https://www.october4mama.tr',
+  'http://october4mama.tr',
+  'http://www.october4mama.tr',
   process.env.CLIENT_URL
 ].filter(Boolean);
 
