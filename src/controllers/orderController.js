@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const User = require('../models/User');
+const { sendOrderNotification, sendStatusUpdateNotification } = require('../services/whatsappService');
 
 // @desc    Sipariş oluştur
 // @route   POST /api/orders
@@ -53,6 +55,19 @@ exports.createOrder = async (req, res, next) => {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stockQuantity: -item.quantity }
       });
+    }
+
+    // WhatsApp bildirimi gönder (async, hata olsa bile sipariş tamamlansın)
+    try {
+      const user = await User.findById(req.user.id);
+      const orderWithUser = {
+        ...order.toObject(),
+        user: user,
+        totalAmount: totalPrice + shippingCost
+      };
+      sendOrderNotification(orderWithUser).catch(err => console.log('WhatsApp bildirim hatası:', err.message));
+    } catch (notifError) {
+      console.log('WhatsApp bildirim hazırlama hatası:', notifError.message);
     }
 
     res.status(201).json({
@@ -151,11 +166,20 @@ exports.updateOrderStatus = async (req, res, next) => {
       });
     }
 
+    const oldStatus = order.orderStatus;
+
     if (orderStatus) order.orderStatus = orderStatus;
     if (paymentStatus) order.paymentStatus = paymentStatus;
     if (trackingNumber) order.trackingNumber = trackingNumber;
 
     await order.save();
+
+    // Durum değiştiyse WhatsApp bildirimi gönder
+    if (orderStatus && orderStatus !== oldStatus) {
+      sendStatusUpdateNotification(order, orderStatus).catch(err =>
+        console.log('WhatsApp durum bildirim hatası:', err.message)
+      );
+    }
 
     res.status(200).json({
       success: true,
