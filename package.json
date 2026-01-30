@@ -11,6 +11,7 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/scripts/seedProducts.js",
     "create-admin": "node src/scripts/createAdmin.js",
+    "update-images": "node src/scripts/updateProductImages.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["pet-food", "ecommerce", "api", "mongodb", "express"],
@@ -19,12 +20,15 @@
   "dependencies": {
     "axios": "^1.6.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.4"
+    "mongoose": "^9.1.4",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

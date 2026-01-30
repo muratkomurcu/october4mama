@@ -8,8 +8,8 @@ const products = [
     category: "kedi",
     ageGroup: "yetişkin",
     price: 299.99,
-    weight: "2kg",
-    image: "/images/adult-cat-food.jpg",
+    weight: "15 KG",
+    image: "/images/october4-mama.jpg",
     description: "Yetişkin kediler için özel formül. Yüksek protein, omega-3 ve omega-6 içeriği ile tüy sağlığını destekler.",
     features: [
       "Yüksek proteinli formül",
@@ -25,8 +25,8 @@ const products = [
     category: "kedi",
     ageGroup: "yavru",
     price: 319.99,
-    weight: "2kg",
-    image: "/images/kitten-food.jpg",
+    weight: "15 KG",
+    image: "/images/october4-mama.jpg",
     description: "Yavru kediler için geliştirilmiş özel formül. Sağlıklı büyüme ve gelişim için tüm besin değerlerini içerir.",
     features: [
       "Büyüme için özel formül",
@@ -42,8 +42,8 @@ const products = [
     category: "köpek",
     ageGroup: "yetişkin",
     price: 349.99,
-    weight: "3kg",
-    image: "/images/adult-dog-food.jpg",
+    weight: "15 KG",
+    image: "/images/october4-mama.jpg",
     description: "Yetişkin köpekler için dengeli beslenme. Aktif yaşam için gerekli tüm besin değerleri.",
     features: [
       "Dengeli protein ve enerji",
@@ -59,8 +59,8 @@ const products = [
     category: "köpek",
     ageGroup: "yavru",
     price: 369.99,
-    weight: "3kg",
-    image: "/images/puppy-food.jpg",
+    weight: "15 KG",
+    image: "/images/october4-mama.jpg",
     description: "Yavru köpekler için özel geliştirilmiş formül. Sağlıklı büyüme ve kemik gelişimi için ideal.",
     features: [
       "Büyüme için özel formül",
