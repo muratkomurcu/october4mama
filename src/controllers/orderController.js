@@ -21,16 +21,19 @@ exports.createOrder = async (req, res, next) => {
       });
     }
 
-    // Sipariş kalemlerini hazırla
-    const orderItems = cart.items.map(item => ({
-      product: item.product._id,
-      productName: item.product.name,
-      quantity: item.quantity,
-      price: item.price,
-      subtotal: item.price * item.quantity
-    }));
+    // Sipariş kalemlerini hazırla - fiyatları veritabanından doğrula
+    const orderItems = cart.items.map(item => {
+      const dbPrice = item.product.price; // Veritabanındaki güncel fiyat
+      return {
+        product: item.product._id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        price: dbPrice,
+        subtotal: dbPrice * item.quantity
+      };
+    });
 
-    // Toplam fiyatı hesapla
+    // Toplam fiyatı veritabanı fiyatlarından hesapla
     const totalPrice = orderItems.reduce((total, item) => total + item.subtotal, 0);
 
     // Kargo ücreti hesapla (örnek: 500 TL üzeri ücretsiz)

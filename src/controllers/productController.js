@@ -53,7 +53,8 @@ exports.getProduct = async (req, res, next) => {
 // @access  Private/Admin
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    const { name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock } = req.body;
+    const product = await Product.create({ name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock });
 
     res.status(201).json({
       success: true,
@@ -70,9 +71,22 @@ exports.createProduct = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateProduct = async (req, res, next) => {
   try {
+    const { name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock } = req.body;
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (category !== undefined) updateData.category = category;
+    if (ageGroup !== undefined) updateData.ageGroup = ageGroup;
+    if (price !== undefined) updateData.price = price;
+    if (weight !== undefined) updateData.weight = weight;
+    if (stockQuantity !== undefined) updateData.stockQuantity = stockQuantity;
+    if (description !== undefined) updateData.description = description;
+    if (image !== undefined) updateData.image = image;
+    if (features !== undefined) updateData.features = features;
+    if (inStock !== undefined) updateData.inStock = inStock;
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true

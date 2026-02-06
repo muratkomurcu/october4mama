@@ -24,10 +24,11 @@ const createAdminIfNotExists = async () => {
     const existingAdmin = await User.findOne({ email: 'admin@october4.com' });
 
     if (!existingAdmin) {
+      const adminPassword = process.env.ADMIN_PASSWORD || 'Oct4Admin2026!';
       const admin = new User({
         fullName: 'October 4 Admin',
-        email: 'admin@october4.com',
-        password: 'admin123',
+        email: process.env.ADMIN_EMAIL || 'admin@october4.com',
+        password: adminPassword,
         phone: '05551234567',
         address: 'Admin',
         role: 'admin'
@@ -35,8 +36,7 @@ const createAdminIfNotExists = async () => {
 
       await admin.save();
       console.log('✅ Admin kullanıcısı oluşturuldu');
-      console.log('📧 Email: admin@october4.com');
-      console.log('🔑 Şifre: admin123');
+      console.log('📧 Email:', process.env.ADMIN_EMAIL || 'admin@october4.com');
     } else {
       console.log('ℹ️  Admin kullanıcısı mevcut');
     }
