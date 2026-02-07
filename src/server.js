@@ -13,6 +13,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Express uygulaması
 const app = express();
@@ -27,6 +28,8 @@ const allowedOrigins = [
   'https://www.october4mama.tr',
   'http://october4mama.tr',
   'http://www.october4mama.tr',
+  'https://sandbox-merchant.iyzipay.com',
+  'https://merchant.iyzipay.com',
   process.env.CLIENT_URL
 ].filter(Boolean);
 
@@ -87,6 +90,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 404 handler
 app.use((req, res) => {
