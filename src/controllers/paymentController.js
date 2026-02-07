@@ -101,8 +101,8 @@ exports.initializeCheckoutForm = async (req, res) => {
     // Sipariş oluştur (beklemede)
     const shippingAddressStr = `${shippingAddress.address}, ${shippingAddress.district}, ${shippingAddress.city} ${shippingAddress.postalCode || ''}`.trim();
 
-    const order = await Order.create({
-      user: req.user.id,
+    // Üye veya misafir sipariş
+    const orderData = {
       items: orderItems,
       totalPrice,
       shippingAddress: shippingAddressStr,
@@ -110,7 +110,19 @@ exports.initializeCheckoutForm = async (req, res) => {
       paymentMethod: 'kredi_kartı',
       paymentStatus: 'beklemede',
       orderStatus: 'hazırlanıyor'
-    });
+    };
+
+    if (req.user) {
+      orderData.user = req.user.id;
+    } else {
+      orderData.guestInfo = {
+        fullName: customer.fullName,
+        email: customer.email,
+        phone: customer.phone
+      };
+    }
+
+    const order = await Order.create(orderData);
 
     // Buyer bilgileri
     const nameParts = customer.fullName.trim().split(' ');
@@ -138,7 +150,7 @@ exports.initializeCheckoutForm = async (req, res) => {
       callbackUrl: `${apiBaseUrl}/api/payment/callback`,
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
-        id: req.user.id,
+        id: req.user?.id || order._id.toString(),
         name: firstName,
         surname: lastName,
         gsmNumber: phone,

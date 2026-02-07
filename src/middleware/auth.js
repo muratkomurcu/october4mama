@@ -48,6 +48,29 @@ exports.protect = async (req, res, next) => {
   }
 };
 
+// Opsiyonel auth - giriş yapmış kullanıcıyı tanır, yoksa da devam eder
+exports.optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await User.findById(decoded.id).select('-password');
+    } catch (error) {
+      // Token geçersiz - misafir olarak devam et
+      req.user = null;
+    }
+  } else {
+    req.user = null;
+  }
+
+  next();
+};
+
 // Admin yetkisi kontrolü
 exports.admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {

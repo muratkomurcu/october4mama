@@ -26,11 +26,16 @@ const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    default: null
+  },
+  // Misafir kullanıcı bilgileri
+  guestInfo: {
+    fullName: String,
+    email: String,
+    phone: String
   },
   orderNumber: {
     type: String,
-    required: true,
     unique: true
   },
   items: [orderItemSchema],
@@ -72,8 +77,8 @@ const orderSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Sipariş numarası oluştur
-orderSchema.pre('save', async function(next) {
+// Sipariş numarası oluştur - validate öncesi çalışsın
+orderSchema.pre('validate', async function(next) {
   if (!this.orderNumber) {
     const date = new Date();
     const year = date.getFullYear();
