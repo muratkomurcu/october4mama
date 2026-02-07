@@ -305,6 +305,98 @@ exports.checkoutFormCallback = async (req, res) => {
   }
 };
 
+// @desc    iyzico'dan ödeme doğrula (Admin - bekleyen siparişleri kurtarmak için)
+// @route   POST /api/payment/verify/:orderId
+// @access  Private/Admin
+exports.verifyPaymentFromIyzico = async (req, res) => {
+  try {
+    const iyzipay = getIyzipay();
+    if (!iyzipay) {
+      return res.status(503).json({
+        success: false,
+        message: 'Ödeme sistemi kullanılamıyor'
+      });
+    }
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sipariş bulunamadı'
+      });
+    }
+
+    const token = order.paymentDetails?.paymentId;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bu siparişte ödeme token bilgisi yok'
+      });
+    }
+
+    // iyzico'dan ödeme durumunu sorgula
+    iyzipay.checkoutForm.retrieve({
+      locale: Iyzipay?.LOCALE?.TR || 'tr',
+      token: token
+    }, async (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: 'iyzico sorgulanamadı: ' + err.message
+        });
+      }
+
+      if (result.paymentStatus === 'SUCCESS') {
+        // Ödeme başarılı - siparişi güncelle
+        const wasAlreadyPaid = order.paymentStatus === 'ödendi';
+
+        order.paymentStatus = 'ödendi';
+        order.paymentDetails = {
+          conversationId: result.conversationId,
+          paymentId: result.paymentId,
+          transactionId: result.paymentId
+        };
+        await order.save();
+
+        // Stokları sadece ilk defa ödendi olarak işaretleniyorsa düş
+        if (!wasAlreadyPaid) {
+          for (const item of order.items) {
+            await Product.findByIdAndUpdate(item.product, {
+              $inc: { stockQuantity: -item.quantity }
+            });
+          }
+        }
+
+        return res.json({
+          success: true,
+          message: wasAlreadyPaid ? 'Sipariş zaten ödendi olarak kayıtlı' : 'Ödeme doğrulandı ve sipariş güncellendi',
+          data: {
+            orderNumber: order.orderNumber,
+            paymentStatus: order.paymentStatus,
+            iyzicoStatus: result.paymentStatus,
+            paidPrice: result.paidPrice
+          }
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: 'iyzico\'da ödeme başarılı değil',
+          data: {
+            orderNumber: order.orderNumber,
+            iyzicoStatus: result.paymentStatus || result.status,
+            errorMessage: result.errorMessage
+          }
+        });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Ödeme doğrulama hatası: ' + error.message
+    });
+  }
+};
+
 // @desc    Ödeme durumunu sorgula
 // @route   GET /api/payment/status/:orderNumber
 // @access  Private

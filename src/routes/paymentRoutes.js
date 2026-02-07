@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { optionalAuth, protect } = require('../middleware/auth');
+const { optionalAuth, protect, admin } = require('../middleware/auth');
 const {
   initializeCheckoutForm,
   checkoutFormCallback,
-  getPaymentStatus
+  getPaymentStatus,
+  verifyPaymentFromIyzico
 } = require('../controllers/paymentController');
 
 // Checkout form başlat (üye veya misafir)
@@ -15,5 +16,8 @@ router.post('/callback', checkoutFormCallback);
 
 // Ödeme durumu sorgula (kullanıcı girişi gerekli)
 router.get('/status/:orderNumber', protect, getPaymentStatus);
+
+// Admin: iyzico'dan ödeme doğrula (bekleyen siparişleri kurtarmak için)
+router.post('/verify/:orderId', protect, admin, verifyPaymentFromIyzico);
 
 module.exports = router;

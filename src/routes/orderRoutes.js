@@ -6,6 +6,7 @@ const {
   getMyOrders,
   getOrder,
   getAllOrders,
+  getPendingOrders,
   updateOrderStatus
 } = require('../controllers/orderController');
 
@@ -13,10 +14,13 @@ const {
 router.use(protect);
 router.post('/', createOrder);
 router.get('/', getMyOrders);
-router.get('/:id', getOrder);
 
-// Admin route'ları
+// Admin route'ları (parametreli route'lardan ÖNCE tanımlanmalı)
 router.get('/admin/all', admin, getAllOrders);
+router.get('/admin/pending', admin, getPendingOrders);
 router.put('/:id/status', admin, updateOrderStatus);
+
+// Parametreli route en sona
+router.get('/:id', getOrder);
 
 module.exports = router;

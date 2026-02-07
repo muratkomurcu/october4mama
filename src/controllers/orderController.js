@@ -143,11 +143,11 @@ exports.getOrder = async (req, res, next) => {
 // @access  Private/Admin
 exports.getAllOrders = async (req, res, next) => {
   try {
-    // 30 dakikadan eski ödenmemiş siparişleri otomatik temizle
-    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+    // 48 saatten eski ödenmemiş siparişleri otomatik temizle
+    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
     await Order.deleteMany({
       paymentStatus: 'beklemede',
-      createdAt: { $lt: thirtyMinAgo }
+      createdAt: { $lt: fortyEightHoursAgo }
     });
 
     // Sadece ödenen veya durumu değişmiş siparişleri getir (beklemede olanları gösterme)
@@ -212,6 +212,28 @@ exports.updateOrderStatus = async (req, res, next) => {
       success: true,
       message: 'Sipariş güncellendi',
       data: order
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Bekleyen (ödenmemiş) siparişleri getir (Admin)
+// @route   GET /api/orders/admin/pending
+// @access  Private/Admin
+exports.getPendingOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find({
+      paymentStatus: 'beklemede'
+    })
+      .populate('user', 'fullName email phone')
+      .populate('items.product')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      data: orders
     });
   } catch (error) {
     next(error);
