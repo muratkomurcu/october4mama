@@ -1,15 +1,26 @@
-const Iyzipay = require('iyzipay');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { sendOrderNotification } = require('../services/whatsappService');
 
-// iyzico yapılandırma
-const iyzipay = new Iyzipay({
-  apiKey: process.env.IYZICO_API_KEY,
-  secretKey: process.env.IYZICO_SECRET_KEY,
-  uri: process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com'
-});
+let Iyzipay;
+try {
+  Iyzipay = require('iyzipay');
+} catch (e) {
+  console.log('iyzipay paketi yüklenemedi:', e.message);
+}
+
+// iyzico instance'ı lazy olarak oluştur (sunucu açılışında değil)
+let iyzipayInstance = null;
+function getIyzipay() {
+  if (!iyzipayInstance && Iyzipay) {
+    iyzipayInstance = new Iyzipay({
+      apiKey: process.env.IYZICO_API_KEY,
+      secretKey: process.env.IYZICO_SECRET_KEY,
+      uri: process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com'
+    });
+  }
+  return iyzipayInstance;
+}
 
 // @desc    iyzico Checkout Form başlat
 // @route   POST /api/payment/initialize
@@ -17,6 +28,14 @@ const iyzipay = new Iyzipay({
 exports.initializeCheckoutForm = async (req, res) => {
   try {
     const { customer, shippingAddress, items } = req.body;
+
+    const iyzipay = getIyzipay();
+    if (!iyzipay) {
+      return res.status(503).json({
+        success: false,
+        message: 'Ödeme sistemi şu anda kullanılamıyor'
+      });
+    }
 
     if (!customer || !shippingAddress || !items || items.length === 0) {
       return res.status(400).json({
@@ -62,7 +81,7 @@ exports.initializeCheckoutForm = async (req, res) => {
       id: item.product.toString(),
       name: item.productName,
       category1: 'Pet Mama',
-      itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
+      itemType: Iyzipay?.BASKET_ITEM_TYPE?.PHYSICAL || 'PHYSICAL',
       price: item.subtotal.toFixed(2)
     }));
 
@@ -72,7 +91,7 @@ exports.initializeCheckoutForm = async (req, res) => {
         id: 'SHIPPING',
         name: 'Kargo Ücreti',
         category1: 'Kargo',
-        itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+        itemType: Iyzipay?.BASKET_ITEM_TYPE?.VIRTUAL || 'VIRTUAL',
         price: shippingCost.toFixed(2)
       });
     }
@@ -109,13 +128,13 @@ exports.initializeCheckoutForm = async (req, res) => {
     const apiBaseUrl = process.env.API_BASE_URL || `https://october4mama.onrender.com`;
 
     const request = {
-      locale: Iyzipay.LOCALE.TR,
+      locale: Iyzipay?.LOCALE?.TR || 'tr',
       conversationId: order.orderNumber,
       price: totalPrice.toFixed(2),
       paidPrice: totalPrice.toFixed(2),
-      currency: Iyzipay.CURRENCY.TRY,
+      currency: Iyzipay?.CURRENCY?.TRY || 'TRY',
       basketId: order._id.toString(),
-      paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+      paymentGroup: Iyzipay?.PAYMENT_GROUP?.PRODUCT || 'PRODUCT',
       callbackUrl: `${apiBaseUrl}/api/payment/callback`,
       enabledInstallments: [1, 2, 3, 6, 9],
       buyer: {
@@ -198,13 +217,14 @@ exports.checkoutFormCallback = async (req, res) => {
   try {
     const { token } = req.body;
 
-    if (!token) {
+    const iyzipay = getIyzipay();
+    if (!token || !iyzipay) {
       const clientUrl = process.env.CLIENT_URL || 'https://october4mama.tr';
       return res.redirect(`${clientUrl}/payment?status=failed`);
     }
 
     iyzipay.checkoutForm.retrieve({
-      locale: Iyzipay.LOCALE.TR,
+      locale: Iyzipay?.LOCALE?.TR || 'tr',
       token: token
     }, async (err, result) => {
       const clientUrl = process.env.CLIENT_URL || 'https://october4mama.tr';
@@ -235,6 +255,7 @@ exports.checkoutFormCallback = async (req, res) => {
 
           // WhatsApp bildirimi
           try {
+            const { sendOrderNotification } = require('../services/whatsappService');
             const user = await User.findById(order.user);
             sendOrderNotification({
               ...order.toObject(),
