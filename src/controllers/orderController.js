@@ -88,7 +88,10 @@ exports.createOrder = async (req, res, next) => {
 // @access  Private
 exports.getMyOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ user: req.user.id })
+    const orders = await Order.find({
+      user: req.user.id,
+      paymentStatus: { $ne: 'beklemede' }
+    })
       .populate('items.product')
       .sort({ createdAt: -1 });
 
@@ -140,7 +143,17 @@ exports.getOrder = async (req, res, next) => {
 // @access  Private/Admin
 exports.getAllOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find()
+    // 30 dakikadan eski ödenmemiş siparişleri otomatik temizle
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+    await Order.deleteMany({
+      paymentStatus: 'beklemede',
+      createdAt: { $lt: thirtyMinAgo }
+    });
+
+    // Sadece ödenen veya durumu değişmiş siparişleri getir (beklemede olanları gösterme)
+    const orders = await Order.find({
+      paymentStatus: { $ne: 'beklemede' }
+    })
       .populate('user', 'fullName email phone')
       .populate('items.product')
       .sort({ createdAt: -1 });
@@ -178,6 +191,15 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (trackingNumber) order.trackingNumber = trackingNumber;
 
     await order.save();
+
+    // Sipariş iptal edildiyse stokları geri ekle
+    if (orderStatus === 'iptal' && oldStatus !== 'iptal') {
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stockQuantity: item.quantity }
+        });
+      }
+    }
 
     // Durum değiştiyse WhatsApp bildirimi gönder
     if (orderStatus && orderStatus !== oldStatus) {
