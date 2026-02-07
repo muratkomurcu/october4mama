@@ -117,7 +117,9 @@ exports.getOrder = async (req, res, next) => {
     }
 
     // Kullanıcı kendi siparişini görebilir veya admin görebilir
-    if (order.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    const isOwner = order.user && order.user.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Bu siparişi görme yetkiniz yok'

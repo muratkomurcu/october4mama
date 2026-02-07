@@ -33,7 +33,10 @@ const allowedOrigins = [
   process.env.CLIENT_URL
 ].filter(Boolean);
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -42,7 +45,13 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('CORS policy violation'), false);
+    // Allow iyzico payment domains
+    if (origin && (origin.includes('iyzipay') || origin.includes('iyzico'))) {
+      return callback(null, true);
+    }
+    // Don't block with error - just don't set CORS headers
+    // Browser will enforce CORS for XHR, form POSTs will work
+    return callback(null, false);
   },
   credentials: true
 }));

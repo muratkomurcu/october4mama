@@ -45,33 +45,43 @@ exports.initializeCheckoutForm = async (req, res) => {
     }
 
     // Fiyatları veritabanından doğrula
-    const productIds = items.map(item => item.id);
-    const products = await Product.find({ _id: { $in: productIds } });
-
-    if (products.length !== items.length) {
+    const validItems = items.filter(item => item.id && String(item.id).length > 0);
+    if (validItems.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Bazı ürünler bulunamadı'
+        message: 'Geçerli ürün bulunamadı'
       });
     }
 
-    const orderItems = items.map(item => {
-      const dbProduct = products.find(p => p._id.toString() === item.id);
+    const productIds = [...new Set(validItems.map(item => String(item.id)))];
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    const productMap = {};
+    products.forEach(p => { productMap[p._id.toString()] = p; });
+
+    const orderItems = [];
+    for (const item of validItems) {
+      const dbProduct = productMap[String(item.id)];
       if (!dbProduct) {
-        throw new Error(`Ürün bulunamadı: ${item.name}`);
+        return res.status(400).json({
+          success: false,
+          message: `Ürün bulunamadı: ${item.name || item.id}`
+        });
       }
-      // Stok kontrolü
       if (dbProduct.stockQuantity < item.quantity) {
-        throw new Error(`${dbProduct.name} için yeterli stok yok`);
+        return res.status(400).json({
+          success: false,
+          message: `${dbProduct.name} için yeterli stok yok (Kalan: ${dbProduct.stockQuantity})`
+        });
       }
-      return {
+      orderItems.push({
         product: dbProduct._id,
         productName: dbProduct.name,
         quantity: item.quantity,
         price: dbProduct.price,
         subtotal: dbProduct.price * item.quantity
-      };
-    });
+      });
+    }
 
     const productTotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
     const shippingCost = productTotal >= 500 ? 0 : 29.99;
@@ -310,7 +320,9 @@ exports.getPaymentStatus = async (req, res) => {
     }
 
     // Kullanıcı kendi siparişini görebilir veya admin
-    if (order.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    const isOwner = order.user && order.user.toString() === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         success: false,
         message: 'Bu siparişi görme yetkiniz yok'
