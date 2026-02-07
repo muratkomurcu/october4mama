@@ -78,7 +78,7 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Sipariş numarası oluştur - validate öncesi çalışsın
-orderSchema.pre('validate', async function(next) {
+orderSchema.pre('validate', function() {
   if (!this.orderNumber) {
     const date = new Date();
     const year = date.getFullYear();
@@ -88,7 +88,6 @@ orderSchema.pre('validate', async function(next) {
 
     this.orderNumber = `OCT4-${year}${month}${day}-${random}`;
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);
