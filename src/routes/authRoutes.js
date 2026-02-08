@@ -7,7 +7,9 @@ const {
   register,
   login,
   getMe,
-  updateProfile
+  updateProfile,
+  forgotPassword,
+  resetPassword
 } = require('../controllers/authController');
 
 // Kayıt validasyonu
@@ -43,6 +45,8 @@ const loginValidation = [
 // Routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateProfile);
 
