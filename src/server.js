@@ -115,6 +115,40 @@ app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
   });
 });
 
+// Admin: Email test mesajı gönder
+const { sendEmail, checkAbandonedCartsAndOrders: runAbandonedCheck } = require('./services/emailService');
+app.post('/api/email/test', protect, admin, async (req, res) => {
+  try {
+    const result = await sendEmail({
+      to: req.user.email,
+      subject: 'October 4 - Email Test',
+      html: '<h2>Email sistemi calisiyor!</h2><p>Bu bir test mesajidir.</p>',
+    });
+    res.json({
+      success: result,
+      message: result ? `Test emaili ${req.user.email} adresine gonderildi!` : 'Email gonderilemedi. SMTP ayarlarini kontrol edin.',
+      config: {
+        host: process.env.EMAIL_HOST || 'YOK',
+        port: process.env.EMAIL_PORT || 'YOK',
+        user: process.env.EMAIL_USER || 'YOK',
+        from: process.env.EMAIL_FROM || 'YOK',
+      }
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// Admin: Abandoned cart kontrolunu manuel calistir
+app.post('/api/email/check-abandoned', protect, admin, async (req, res) => {
+  try {
+    await runAbandonedCheck();
+    res.json({ success: true, message: 'Abandoned cart/order kontrolu tamamlandi.' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -134,10 +168,9 @@ cron.schedule('0 6 * * *', () => {
 });
 
 // Terk edilen sepet ve tamamlanmamis siparis kontrolu (her saat basi)
-const { checkAbandonedCartsAndOrders } = require('./services/emailService');
 cron.schedule('0 * * * *', () => {
   console.log('Abandoned cart/order kontrolu yapiliyor...');
-  checkAbandonedCartsAndOrders().catch((err) => {
+  runAbandonedCheck().catch((err) => {
     console.error('Abandoned check hatasi:', err.message);
   });
 });
