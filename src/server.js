@@ -112,6 +112,26 @@ app.use((req, res) => {
 // Error handler (en sonda olmalı)
 app.use(errorHandler);
 
+// WhatsApp günlük selamlama cron job (her gün 09:00 Türkiye saati)
+const cron = require('node-cron');
+const { sendDailyGreeting, sendTestMessage } = require('./services/whatsappService');
+
+// Türkiye UTC+3, cron UTC'de çalışır: 09:00 TR = 06:00 UTC
+cron.schedule('0 6 * * *', () => {
+  console.log('⏰ Günlük WhatsApp selamlama gönderiliyor...');
+  sendDailyGreeting().catch(() => {});
+});
+
+// Admin: WhatsApp test mesajı gönder
+const { protect, admin } = require('./middleware/auth');
+app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
+  const result = await sendTestMessage();
+  res.json({
+    success: result,
+    message: result ? 'Test mesajı gönderildi!' : 'Mesaj gönderilemedi. WHATSAPP ayarlarını kontrol edin.'
+  });
+});
+
 // Server'ı başlat
 const PORT = process.env.PORT || 5000;
 
@@ -119,6 +139,12 @@ const server = app.listen(PORT, () => {
   console.log(`\n🚀 Server ${process.env.NODE_ENV} modunda ${PORT} portunda çalışıyor`);
   console.log(`📍 API URL: http://localhost:${PORT}`);
   console.log(`📍 Frontend URL: ${process.env.CLIENT_URL}\n`);
+
+  // Sunucu başlangıcında anlık test mesajı gönder
+  sendTestMessage().then(result => {
+    if (result) console.log('✅ WhatsApp başlangıç mesajı gönderildi');
+    else console.log('⚠️ WhatsApp mesajı gönderilemedi (ayarları kontrol edin)');
+  }).catch(() => {});
 });
 
 // Unhandled promise rejections

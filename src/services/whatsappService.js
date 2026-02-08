@@ -96,8 +96,41 @@ ${statusMessages[newStatus] || `Yeni Durum: ${newStatus}`}
   return await sendWhatsAppMessage(message);
 };
 
+/**
+ * Günlük sabah selamlama mesajı (her gün 09:00 TR saati)
+ */
+const sendDailyGreeting = async () => {
+  const today = new Date().toLocaleDateString('tr-TR', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  const message = `🐾 *Merhaba! Ben October 4 satış asistanınızım.*
+
+📅 ${today}
+
+Bugün gelen tüm siparişlerde size anında bilgilendirme yapacağım. Hayırlı işler! 🍀`;
+
+  return await sendWhatsAppMessage(message);
+};
+
+/**
+ * Anlık test mesajı
+ */
+const sendTestMessage = async () => {
+  const message = `✅ *October 4 WhatsApp Bildirim Sistemi Aktif!*
+
+🐾 Merhaba! Ben October 4 satış asistanınızım.
+Gelen tüm siparişlerde size anında bilgilendirme yapacağım.
+
+⏰ Test zamanı: ${new Date().toLocaleString('tr-TR')}`;
+
+  return await sendWhatsAppMessage(message);
+};
+
 module.exports = {
   sendWhatsAppMessage,
   sendOrderNotification,
-  sendStatusUpdateNotification
+  sendStatusUpdateNotification,
+  sendDailyGreeting,
+  sendTestMessage
 };
