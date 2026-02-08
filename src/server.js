@@ -135,7 +135,18 @@ app.post('/api/email/test', protect, admin, async (req, res) => {
       }
     });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    res.json({
+      success: false,
+      message: error.message,
+      code: error.code || null,
+      responseCode: error.responseCode || null,
+      config: {
+        host: process.env.EMAIL_HOST || 'YOK',
+        port: process.env.EMAIL_PORT || 'YOK',
+        user: process.env.EMAIL_USER || 'YOK',
+        secure: process.env.EMAIL_SECURE || 'YOK',
+      }
+    });
   }
 });
 

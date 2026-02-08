@@ -37,8 +37,8 @@ async function sendEmail({ to, subject, html }) {
     console.log(`Email gonderildi: ${to} - ${subject}`);
     return true;
   } catch (error) {
-    console.error('Email gonderilemedi:', error.message);
-    return false;
+    console.error('Email gonderilemedi:', error.message, error.code, error.responseCode);
+    throw error;
   }
 }
 
