@@ -36,44 +36,28 @@ const sendWhatsAppMessage = async (message) => {
  * Yeni sipariş bildirimi gönder (ödeme başarılı olduğunda)
  */
 const sendOrderNotification = async (order) => {
-  const customerName = order.user?.fullName || order.guestInfo?.fullName || 'Misafir Musteri';
-  const customerPhone = order.user?.phone || order.guestInfo?.phone || 'Belirtilmedi';
-  const customerEmail = order.user?.email || order.guestInfo?.email || 'Belirtilmedi';
-  const memberType = order.user ? 'Uye' : 'Misafir';
-
-  // Ürün listesi
-  const itemsList = order.items?.map(item => {
-    const name = item.productName || item.product?.name || 'Urun';
-    const qty = item.quantity;
-    const total = (item.price * item.quantity).toFixed(2);
-    return `  • ${name} (x${qty}) - ${total} TL`;
-  }).join('\n') || '  Urun bilgisi yok';
-
-  const shippingCost = order.shippingCost > 0 ? `${order.shippingCost.toFixed(2)} TL` : 'Ucretsiz';
+  const customerName = order.user?.fullName || order.guestInfo?.fullName || 'Misafir';
+  const customerPhone = order.user?.phone || order.guestInfo?.phone || '-';
   const totalPrice = order.totalAmount || order.totalPrice;
 
-  const message = `*OCTOBER 4 - YENI SIPARIS*
+  // Ürün listesi - kısa ama tamamı
+  const itemsList = (order.items || []).map(item => {
+    const name = item.productName || item.product?.name || 'Urun';
+    return `${name} x${item.quantity}`;
+  }).join('\n');
 
-Siparis No: #${order.orderNumber || order._id}
-Tarih: ${new Date().toLocaleString('tr-TR')}
+  const orderDate = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
 
-*MUSTERI BILGILERI*
+  const message = `*YENI SIPARIS #${order.orderNumber || order._id}*
+Tarih: ${orderDate}
 Ad Soyad: ${customerName}
-Telefon: ${customerPhone}
-E-posta: ${customerEmail}
-Uyelik: ${memberType}
+Tel: ${customerPhone}
+Adres: ${order.shippingAddress || '-'}
 
-*TESLIMAT ADRESI*
-${order.shippingAddress || 'Belirtilmedi'}
-
-*SIPARIS DETAYI*
+Urunler:
 ${itemsList}
 
-Kargo: ${shippingCost}
-*TOPLAM: ${totalPrice} TL*
-
-Odeme durumu: ODENDI
-Siparis panelden takip edilebilir.`;
+*Toplam: ${totalPrice} TL - ODENDI*`;
 
   return await sendWhatsAppMessage(message);
 };
