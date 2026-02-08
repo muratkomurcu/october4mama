@@ -454,14 +454,14 @@ async function sendAbandonedOrderEmail(email, customerName, order) {
 // ===================== CRON: ABANDONED CART CHECKER =====================
 
 /**
- * Her saat basinda calisir: terk edilen sepetleri ve tamamlanmamis siparisleri kontrol eder
+ * Her 30 dakikada calisir: terk edilen sepetleri ve tamamlanmamis siparisleri kontrol eder
  */
 async function checkAbandonedCartsAndOrders() {
   const Cart = require('../models/Cart');
   const Order = require('../models/Order');
   const User = require('../models/User');
 
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
@@ -469,7 +469,7 @@ async function checkAbandonedCartsAndOrders() {
   try {
     const pendingOrders = await Order.find({
       paymentStatus: 'beklemede',
-      createdAt: { $gt: fortyEightHoursAgo, $lt: oneHourAgo },
+      createdAt: { $gt: fortyEightHoursAgo, $lt: thirtyMinAgo },
       notes: { $not: /REMINDER_SENT/ },
     }).populate('items.product');
 
@@ -503,7 +503,7 @@ async function checkAbandonedCartsAndOrders() {
   try {
     const abandonedCarts = await Cart.find({
       'items.0': { $exists: true },
-      updatedAt: { $lt: oneHourAgo },
+      updatedAt: { $lt: thirtyMinAgo },
       $and: [
         { $or: [{ lastNotifiedAt: null }, { lastNotifiedAt: { $lt: oneDayAgo } }] },
         { $or: [{ notificationCount: { $exists: false } }, { notificationCount: { $lt: 3 } }] },

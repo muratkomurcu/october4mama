@@ -119,14 +119,15 @@ app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
 const { sendEmail, checkAbandonedCartsAndOrders: runAbandonedCheck } = require('./services/emailService');
 app.post('/api/email/test', protect, admin, async (req, res) => {
   try {
+    const toEmail = req.body.to || req.user.email;
     const result = await sendEmail({
-      to: req.user.email,
+      to: toEmail,
       subject: 'October 4 - Email Test',
       html: '<h2>Email sistemi calisiyor!</h2><p>Bu bir test mesajidir.</p>',
     });
     res.json({
       success: result,
-      message: result ? `Test emaili ${req.user.email} adresine gonderildi!` : 'Email gonderilemedi. SMTP ayarlarini kontrol edin.',
+      message: result ? `Test emaili ${toEmail} adresine gonderildi!` : 'Email gonderilemedi. SMTP ayarlarini kontrol edin.',
       config: {
         host: process.env.EMAIL_HOST || 'YOK',
         port: process.env.EMAIL_PORT || 'YOK',
@@ -178,8 +179,8 @@ cron.schedule('0 6 * * *', () => {
   sendDailyGreeting().catch(() => {});
 });
 
-// Terk edilen sepet ve tamamlanmamis siparis kontrolu (her saat basi)
-cron.schedule('0 * * * *', () => {
+// Terk edilen sepet ve tamamlanmamis siparis kontrolu (her 30 dakikada bir)
+cron.schedule('*/30 * * * *', () => {
   console.log('Abandoned cart/order kontrolu yapiliyor...');
   runAbandonedCheck().catch((err) => {
     console.error('Abandoned check hatasi:', err.message);
