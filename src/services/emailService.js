@@ -47,17 +47,34 @@ async function sendEmail({ to, subject, html }) {
 
 // ===================== HTML TEMPLATE'LER =====================
 
-function orderConfirmationTemplate(order, customerName) {
-  const orderDate = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+const LOGO_URL = 'https://october4mama.tr/logo.jpeg';
 
-  const itemRows = (order.items || []).map(item => {
-    const name = item.productName || item.product?.name || 'Urun';
-    const image = item.product?.image || item.product?.images?.[0] || '';
-    const price = item.price || 0;
-    const qty = item.quantity || 1;
-    const subtotal = item.subtotal || (price * qty);
+function emailHeader() {
+  return `
+        <!-- Header -->
+        <tr>
+          <td style="background-color:#4a7c59;padding:25px 30px;text-align:center;">
+            <img src="${LOGO_URL}" alt="October 4" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;letter-spacing:1px;">OCTOBER 4</h1>
+            <p style="margin:4px 0 0;color:#d4e8d0;font-size:12px;">Patili Dostlarınız İçin Doğal Mamalar</p>
+          </td>
+        </tr>`;
+}
 
-    return `
+function emailFooter() {
+  return `
+        <!-- Footer -->
+        <tr>
+          <td style="background-color:#f8f6f0;padding:25px 30px;text-align:center;">
+            <p style="margin:0 0 5px;font-size:13px;color:#888;">Sorularınız için bize ulaşın</p>
+            <p style="margin:0;font-size:13px;color:#4a7c59;">info@october4mama.tr | 0505 502 05 05</p>
+            <p style="margin:10px 0 0;font-size:12px;color:#aaa;">october4mama.tr</p>
+          </td>
+        </tr>`;
+}
+
+function productRow(name, image, qty, subtotal) {
+  return `
       <tr>
         <td style="padding:12px;border-bottom:1px solid #eee;">
           ${image ? `<img src="${image}" alt="${name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ''}
@@ -70,6 +87,18 @@ function orderConfirmationTemplate(order, customerName) {
           ${subtotal.toFixed(2)} TL
         </td>
       </tr>`;
+}
+
+function orderConfirmationTemplate(order, customerName) {
+  const orderDate = new Date().toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+
+  const itemRows = (order.items || []).map(item => {
+    const name = item.productName || item.product?.name || 'Ürün';
+    const image = item.product?.image || item.product?.images?.[0] || '';
+    const price = item.price || 0;
+    const qty = item.quantity || 1;
+    const subtotal = item.subtotal || (price * qty);
+    return productRow(name, image, qty, subtotal);
   }).join('');
 
   return `
@@ -81,31 +110,25 @@ function orderConfirmationTemplate(order, customerName) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
 
-        <!-- Header -->
-        <tr>
-          <td style="background-color:#4a7c59;padding:30px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:24px;letter-spacing:1px;">OCTOBER 4</h1>
-            <p style="margin:5px 0 0;color:#d4e8d0;font-size:13px;">Pet Food</p>
-          </td>
-        </tr>
+        ${emailHeader()}
 
-        <!-- Onay Mesaji -->
+        <!-- Onay Mesajı -->
         <tr>
           <td style="padding:30px 30px 20px;">
-            <h2 style="margin:0 0 10px;color:#4a7c59;font-size:20px;">Siparisini Aldik!</h2>
+            <h2 style="margin:0 0 10px;color:#4a7c59;font-size:20px;">Siparişinizi Aldık!</h2>
             <p style="margin:0;color:#555;font-size:14px;line-height:1.6;">
-              Merhaba <strong>${customerName}</strong>,<br>
-              Siparisini basariyla aldik. Siparisini hazirlayip en kisa surede kargoya veriyoruz.
+              Merhaba <strong>${customerName}</strong>,<br><br>
+              Siparişiniz başarıyla alındı, çok teşekkür ederiz! Patili dostunuzun mamalarını özenle hazırlayıp en kısa sürede kargoya teslim edeceğiz. Siparişinizle ilgili herhangi bir sorunuz olursa bize ulaşmaktan çekinmeyin.
             </p>
           </td>
         </tr>
 
-        <!-- Siparis Bilgileri -->
+        <!-- Sipariş Bilgileri -->
         <tr>
           <td style="padding:0 30px;">
             <table width="100%" style="background-color:#f8f6f0;border-radius:8px;padding:15px;">
               <tr>
-                <td style="padding:8px 15px;font-size:13px;color:#888;">Siparis No:</td>
+                <td style="padding:8px 15px;font-size:13px;color:#888;">Sipariş No:</td>
                 <td style="padding:8px 15px;font-size:13px;color:#333;font-weight:bold;text-align:right;">#${order.orderNumber || order._id}</td>
               </tr>
               <tr>
@@ -116,10 +139,10 @@ function orderConfirmationTemplate(order, customerName) {
           </td>
         </tr>
 
-        <!-- Urunler -->
+        <!-- Ürünler -->
         <tr>
           <td style="padding:20px 30px 10px;">
-            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Siparis Detaylari</h3>
+            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Sipariş Detayları</h3>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${itemRows}
             </table>
@@ -132,7 +155,7 @@ function orderConfirmationTemplate(order, customerName) {
             <table width="100%" style="background-color:#4a7c59;border-radius:8px;">
               <tr>
                 <td style="padding:15px 20px;color:#fff;font-size:14px;">Kargo:</td>
-                <td style="padding:15px 20px;color:#fff;font-size:14px;text-align:right;">Ucretsiz</td>
+                <td style="padding:15px 20px;color:#fff;font-size:14px;text-align:right;">Ücretsiz</td>
               </tr>
               <tr>
                 <td style="padding:0 20px 15px;color:#fff;font-size:18px;font-weight:bold;">Toplam:</td>
@@ -150,14 +173,7 @@ function orderConfirmationTemplate(order, customerName) {
           </td>
         </tr>
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color:#f8f6f0;padding:25px 30px;text-align:center;">
-            <p style="margin:0 0 5px;font-size:13px;color:#888;">Sorulariniz icin bize ulasin</p>
-            <p style="margin:0;font-size:13px;color:#4a7c59;">info@october4mama.tr | 0505 502 05 05</p>
-            <p style="margin:10px 0 0;font-size:12px;color:#aaa;">october4mama.tr</p>
-          </td>
-        </tr>
+        ${emailFooter()}
 
       </table>
     </td></tr>
@@ -168,24 +184,11 @@ function orderConfirmationTemplate(order, customerName) {
 
 function abandonedCartTemplate(customerName, cartItems, cartTotal) {
   const itemRows = cartItems.map(item => {
-    const name = item.product?.name || item.productName || 'Urun';
+    const name = item.product?.name || item.productName || 'Ürün';
     const image = item.product?.image || item.product?.images?.[0] || '';
     const price = item.price || item.product?.price || 0;
     const qty = item.quantity || 1;
-
-    return `
-      <tr>
-        <td style="padding:12px;border-bottom:1px solid #eee;">
-          ${image ? `<img src="${image}" alt="${name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ''}
-        </td>
-        <td style="padding:12px;border-bottom:1px solid #eee;font-size:14px;color:#333;">
-          ${name}<br>
-          <span style="color:#888;font-size:12px;">x${qty}</span>
-        </td>
-        <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-size:14px;font-weight:bold;color:#333;">
-          ${(price * qty).toFixed(2)} TL
-        </td>
-      </tr>`;
+    return productRow(name, image, qty, price * qty);
   }).join('');
 
   return `
@@ -197,31 +200,23 @@ function abandonedCartTemplate(customerName, cartItems, cartTotal) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
 
-        <!-- Header -->
-        <tr>
-          <td style="background-color:#4a7c59;padding:30px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:24px;letter-spacing:1px;">OCTOBER 4</h1>
-            <p style="margin:5px 0 0;color:#d4e8d0;font-size:13px;">Pet Food</p>
-          </td>
-        </tr>
+        ${emailHeader()}
 
         <!-- Mesaj -->
         <tr>
           <td style="padding:30px 30px 20px;">
-            <h2 style="margin:0 0 15px;color:#4a7c59;font-size:20px;">Sepetinizde urunler sizi bekliyor!</h2>
+            <h2 style="margin:0 0 15px;color:#4a7c59;font-size:20px;">Sepetinizde ürünler sizi bekliyor!</h2>
             <p style="margin:0;color:#555;font-size:14px;line-height:1.6;">
               Merhaba <strong>${customerName}</strong>,<br><br>
-              Sepetinizi hazirlayip biraktinizi fark ettik.
-              Patili dostunuzun saglikli ve mutlu olmasi icin sectiniz urunler hala sizi bekliyor.
-              Siparisini tamamlayin, dostunuz lezzetli mamalarla bulunsun!
+              Sepetinize eklediğiniz ürünleri fark ettik ve hatırlatmak istedik. Patili dostunuz için seçtiğiniz bu güzel ürünler hâlâ sizi bekliyor! Siparişinizi tamamlayın, tüylü arkadaşınız lezzetli ve sağlıklı mamalarına kavuşsun.
             </p>
           </td>
         </tr>
 
-        <!-- Urunler -->
+        <!-- Ürünler -->
         <tr>
           <td style="padding:0 30px 10px;">
-            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Sepetinizdeki Urunler</h3>
+            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Sepetinizdeki Ürünler</h3>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${itemRows}
             </table>
@@ -244,7 +239,7 @@ function abandonedCartTemplate(customerName, cartItems, cartTotal) {
         <tr>
           <td style="padding:25px 30px;text-align:center;">
             <a href="https://october4mama.tr" style="display:inline-block;background-color:#4a7c59;color:#ffffff;padding:14px 40px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:bold;">
-              Sepetine Don
+              Sepetime Dön
             </a>
           </td>
         </tr>
@@ -252,18 +247,11 @@ function abandonedCartTemplate(customerName, cartItems, cartTotal) {
         <!-- Alt Mesaj -->
         <tr>
           <td style="padding:0 30px 10px;text-align:center;">
-            <p style="margin:0;font-size:13px;color:#888;">Tum siparislerde kargo tamamen ucretsizdir.</p>
+            <p style="margin:0;font-size:13px;color:#888;">Tüm siparişlerde kargo tamamen ücretsizdir.</p>
           </td>
         </tr>
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color:#f8f6f0;padding:25px 30px;text-align:center;">
-            <p style="margin:0 0 5px;font-size:13px;color:#888;">Sorulariniz icin bize ulasin</p>
-            <p style="margin:0;font-size:13px;color:#4a7c59;">info@october4mama.tr | 0505 502 05 05</p>
-            <p style="margin:10px 0 0;font-size:12px;color:#aaa;">october4mama.tr</p>
-          </td>
-        </tr>
+        ${emailFooter()}
 
       </table>
     </td></tr>
@@ -274,23 +262,10 @@ function abandonedCartTemplate(customerName, cartItems, cartTotal) {
 
 function abandonedOrderTemplate(customerName, order) {
   const itemRows = (order.items || []).map(item => {
-    const name = item.productName || item.product?.name || 'Urun';
+    const name = item.productName || item.product?.name || 'Ürün';
     const image = item.product?.image || item.product?.images?.[0] || '';
     const subtotal = item.subtotal || (item.price * item.quantity);
-
-    return `
-      <tr>
-        <td style="padding:12px;border-bottom:1px solid #eee;">
-          ${image ? `<img src="${image}" alt="${name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">` : ''}
-        </td>
-        <td style="padding:12px;border-bottom:1px solid #eee;font-size:14px;color:#333;">
-          ${name}<br>
-          <span style="color:#888;font-size:12px;">x${item.quantity}</span>
-        </td>
-        <td style="padding:12px;border-bottom:1px solid #eee;text-align:right;font-size:14px;font-weight:bold;color:#333;">
-          ${subtotal.toFixed(2)} TL
-        </td>
-      </tr>`;
+    return productRow(name, image, item.quantity, subtotal);
   }).join('');
 
   return `
@@ -302,31 +277,23 @@ function abandonedOrderTemplate(customerName, order) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
 
-        <!-- Header -->
-        <tr>
-          <td style="background-color:#4a7c59;padding:30px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:24px;letter-spacing:1px;">OCTOBER 4</h1>
-            <p style="margin:5px 0 0;color:#d4e8d0;font-size:13px;">Pet Food</p>
-          </td>
-        </tr>
+        ${emailHeader()}
 
         <!-- Mesaj -->
         <tr>
           <td style="padding:30px 30px 20px;">
-            <h2 style="margin:0 0 15px;color:#4a7c59;font-size:20px;">Odemeniz tamamlanmadi!</h2>
+            <h2 style="margin:0 0 15px;color:#4a7c59;font-size:20px;">Ödemeniz tamamlanmadı!</h2>
             <p style="margin:0;color:#555;font-size:14px;line-height:1.6;">
               Merhaba <strong>${customerName}</strong>,<br><br>
-              Siparisizi olusturdunuz ancak odeme islemi tamamlanamadi.
-              Endise etmeyin, sepetinizdeki urunler hala mevcut.
-              Siparisini tamamlamak icin asagidaki butona tiklayin.
+              Siparişinizi oluşturdunuz ancak ödeme işlemi tamamlanamadı. Endişelenmeyin, seçtiğiniz ürünler hâlâ sizin için ayrılmış durumda! Aşağıdaki butona tıklayarak siparişinizi kolayca tamamlayabilirsiniz.
             </p>
           </td>
         </tr>
 
-        <!-- Urunler -->
+        <!-- Ürünler -->
         <tr>
           <td style="padding:0 30px 10px;">
-            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Siparisiniz</h3>
+            <h3 style="margin:0 0 10px;color:#333;font-size:16px;">Siparişiniz</h3>
             <table width="100%" cellpadding="0" cellspacing="0">
               ${itemRows}
             </table>
@@ -349,19 +316,19 @@ function abandonedOrderTemplate(customerName, order) {
         <tr>
           <td style="padding:25px 30px;text-align:center;">
             <a href="https://october4mama.tr" style="display:inline-block;background-color:#4a7c59;color:#ffffff;padding:14px 40px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:bold;">
-              Siparisi Tamamla
+              Siparişi Tamamla
             </a>
           </td>
         </tr>
 
-        <!-- Footer -->
+        <!-- Alt Mesaj -->
         <tr>
-          <td style="background-color:#f8f6f0;padding:25px 30px;text-align:center;">
-            <p style="margin:0 0 5px;font-size:13px;color:#888;">Sorulariniz icin bize ulasin</p>
-            <p style="margin:0;font-size:13px;color:#4a7c59;">info@october4mama.tr | 0505 502 05 05</p>
-            <p style="margin:10px 0 0;font-size:12px;color:#aaa;">october4mama.tr</p>
+          <td style="padding:0 30px 10px;text-align:center;">
+            <p style="margin:0;font-size:13px;color:#888;">Tüm siparişlerde kargo tamamen ücretsizdir.</p>
           </td>
         </tr>
+
+        ${emailFooter()}
 
       </table>
     </td></tr>
@@ -388,10 +355,10 @@ async function sendOrderConfirmationEmail(order) {
     if (populatedOrder.user) {
       const user = await User.findById(populatedOrder.user);
       email = user?.email;
-      customerName = user?.fullName || 'Degerli Musterimiz';
+      customerName = user?.fullName || 'Değerli Müşterimiz';
     } else if (populatedOrder.guestInfo) {
       email = populatedOrder.guestInfo.email;
-      customerName = populatedOrder.guestInfo.fullName || 'Degerli Musterimiz';
+      customerName = populatedOrder.guestInfo.fullName || 'Değerli Müşterimiz';
     }
 
     if (!email) return false;
@@ -399,7 +366,7 @@ async function sendOrderConfirmationEmail(order) {
     const html = orderConfirmationTemplate(populatedOrder, customerName);
     return await sendEmail({
       to: email,
-      subject: `Siparisini Aldik! #${populatedOrder.orderNumber || populatedOrder._id}`,
+      subject: `Siparişinizi Aldık! #${populatedOrder.orderNumber || populatedOrder._id}`,
       html,
     });
   } catch (error) {
@@ -420,10 +387,10 @@ async function sendAbandonedCartEmail(user, cart) {
       return sum + (price * item.quantity);
     }, 0);
 
-    const html = abandonedCartTemplate(user.fullName || 'Degerli Musterimiz', cart.items, cartTotal);
+    const html = abandonedCartTemplate(user.fullName || 'Değerli Müşterimiz', cart.items, cartTotal);
     return await sendEmail({
       to: user.email,
-      subject: 'Sepetinizde urunler sizi bekliyor!',
+      subject: 'Sepetinizde ürünler sizi bekliyor!',
       html,
     });
   } catch (error) {
@@ -439,10 +406,10 @@ async function sendAbandonedOrderEmail(email, customerName, order) {
   try {
     if (!email) return false;
 
-    const html = abandonedOrderTemplate(customerName || 'Degerli Musterimiz', order);
+    const html = abandonedOrderTemplate(customerName || 'Değerli Müşterimiz', order);
     return await sendEmail({
       to: email,
-      subject: `Siparisini tamamlamadiniz - #${order.orderNumber || order._id}`,
+      subject: `Siparişiniz tamamlanmadı - #${order.orderNumber || order._id}`,
       html,
     });
   } catch (error) {
