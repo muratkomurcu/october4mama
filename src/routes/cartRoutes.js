@@ -6,7 +6,8 @@ const {
   addToCart,
   updateCartItem,
   removeFromCart,
-  clearCart
+  clearCart,
+  syncCart
 } = require('../controllers/cartController');
 
 // Tüm route'lar protected (giriş gerektirir)
@@ -14,6 +15,7 @@ router.use(protect);
 
 router.get('/', getCart);
 router.post('/items', addToCart);
+router.put('/sync', syncCart);
 router.put('/items/:productId', updateCartItem);
 router.delete('/items/:productId', removeFromCart);
 router.delete('/', clearCart);

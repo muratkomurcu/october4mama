@@ -287,6 +287,14 @@ exports.checkoutFormCallback = async (req, res) => {
           } catch (e) {
             // Bildirim hatası siparişi etkilemez
           }
+
+          // Email bildirimi
+          try {
+            const { sendOrderConfirmationEmail } = require('../services/emailService');
+            sendOrderConfirmationEmail(order).catch(() => {});
+          } catch (e) {
+            // Email hatası siparişi etkilemez
+          }
         }
 
         return res.redirect(`${clientUrl}/payment?status=success&orderNumber=${order?.orderNumber || ''}`);
@@ -364,6 +372,14 @@ exports.verifyPaymentFromIyzico = async (req, res) => {
             await Product.findByIdAndUpdate(item.product, {
               $inc: { stockQuantity: -item.quantity }
             });
+          }
+
+          // Email bildirimi
+          try {
+            const { sendOrderConfirmationEmail } = require('../services/emailService');
+            sendOrderConfirmationEmail(order).catch(() => {});
+          } catch (e) {
+            // Email hatası siparişi etkilemez
           }
         }
 

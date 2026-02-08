@@ -29,6 +29,14 @@ const cartSchema = new mongoose.Schema({
   totalPrice: {
     type: Number,
     default: 0
+  },
+  lastNotifiedAt: {
+    type: Date,
+    default: null
+  },
+  notificationCount: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true
@@ -42,9 +50,8 @@ cartSchema.methods.calculateTotal = function() {
 };
 
 // Sepete ürün eklemeden önce toplam fiyatı güncelle
-cartSchema.pre('save', function(next) {
+cartSchema.pre('save', function() {
   this.calculateTotal();
-  next();
 });
 
 module.exports = mongoose.model('Cart', cartSchema);

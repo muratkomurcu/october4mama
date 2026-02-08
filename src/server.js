@@ -129,8 +129,17 @@ app.use(errorHandler);
 // WhatsApp günlük selamlama cron job (her gün 09:00 Türkiye saati)
 // Türkiye UTC+3, cron UTC'de çalışır: 09:00 TR = 06:00 UTC
 cron.schedule('0 6 * * *', () => {
-  console.log('⏰ Günlük WhatsApp selamlama gönderiliyor...');
+  console.log('Gunluk WhatsApp selamlama gonderiliyor...');
   sendDailyGreeting().catch(() => {});
+});
+
+// Terk edilen sepet ve tamamlanmamis siparis kontrolu (her saat basi)
+const { checkAbandonedCartsAndOrders } = require('./services/emailService');
+cron.schedule('0 * * * *', () => {
+  console.log('Abandoned cart/order kontrolu yapiliyor...');
+  checkAbandonedCartsAndOrders().catch((err) => {
+    console.error('Abandoned check hatasi:', err.message);
+  });
 });
 
 // Server'ı başlat

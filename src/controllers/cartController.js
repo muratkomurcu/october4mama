@@ -171,6 +171,39 @@ exports.removeFromCart = async (req, res, next) => {
   }
 };
 
+// @desc    Frontend sepetini backend'e senkronize et
+// @route   PUT /api/cart/sync
+// @access  Private
+exports.syncCart = async (req, res, next) => {
+  try {
+    const { items } = req.body;
+
+    let cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) {
+      cart = await Cart.create({ user: req.user.id, items: [] });
+    }
+
+    const validItems = [];
+    for (const item of (items || [])) {
+      const product = await Product.findById(item.id);
+      if (product) {
+        validItems.push({
+          product: product._id,
+          quantity: item.quantity || 1,
+          price: product.price,
+        });
+      }
+    }
+
+    cart.items = validItems;
+    await cart.save();
+
+    res.status(200).json({ success: true, data: cart });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Sepeti temizle
 // @route   DELETE /api/cart
 // @access  Private
