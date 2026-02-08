@@ -92,6 +92,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// WhatsApp servisi
+const cron = require('node-cron');
+const { sendDailyGreeting, sendTestMessage } = require('./services/whatsappService');
+const { protect, admin } = require('./middleware/auth');
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -100,6 +105,15 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/payment', paymentRoutes);
+
+// Admin: WhatsApp test mesajı gönder
+app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
+  const result = await sendTestMessage();
+  res.json({
+    success: result,
+    message: result ? 'Test mesajı gönderildi!' : 'Mesaj gönderilemedi. WHATSAPP ayarlarını kontrol edin.'
+  });
+});
 
 // 404 handler
 app.use((req, res) => {
@@ -113,23 +127,10 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // WhatsApp günlük selamlama cron job (her gün 09:00 Türkiye saati)
-const cron = require('node-cron');
-const { sendDailyGreeting, sendTestMessage } = require('./services/whatsappService');
-
 // Türkiye UTC+3, cron UTC'de çalışır: 09:00 TR = 06:00 UTC
 cron.schedule('0 6 * * *', () => {
   console.log('⏰ Günlük WhatsApp selamlama gönderiliyor...');
   sendDailyGreeting().catch(() => {});
-});
-
-// Admin: WhatsApp test mesajı gönder
-const { protect, admin } = require('./middleware/auth');
-app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
-  const result = await sendTestMessage();
-  res.json({
-    success: result,
-    message: result ? 'Test mesajı gönderildi!' : 'Mesaj gönderilemedi. WHATSAPP ayarlarını kontrol edin.'
-  });
 });
 
 // Server'ı başlat
