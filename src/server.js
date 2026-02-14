@@ -14,6 +14,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const externalSaleRoutes = require('./routes/externalSaleRoutes');
 
 // Express uygulaması
 const app = express();
@@ -105,6 +106,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/external-sales', externalSaleRoutes);
 
 // Admin: WhatsApp test mesajı gönder
 app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
