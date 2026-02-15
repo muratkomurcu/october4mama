@@ -71,6 +71,11 @@ const orderSchema = new mongoose.Schema({
     paymentId: String,
     transactionId: String
   },
+  couponCode: String,
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
   trackingNumber: String,
   notes: String
 }, {

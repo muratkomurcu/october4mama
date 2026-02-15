@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const Coupon = require('../models/Coupon');
 
 let Iyzipay;
 try {
@@ -27,7 +28,7 @@ function getIyzipay() {
 // @access  Private
 exports.initializeCheckoutForm = async (req, res) => {
   try {
-    const { customer, shippingAddress, items } = req.body;
+    const { customer, shippingAddress, items, couponCode } = req.body;
 
     const iyzipay = getIyzipay();
     if (!iyzipay) {
@@ -86,13 +87,42 @@ exports.initializeCheckoutForm = async (req, res) => {
     const productTotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
     const shippingCost = productTotal >= 500 ? 0 : 29.99;
 
-    // Sepet kalemleri (iyzico formatı)
+    // Kupon kontrolu
+    let discountAmount = 0;
+    let validCoupon = null;
+
+    if (couponCode) {
+      validCoupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+
+      if (!validCoupon || !validCoupon.isActive) {
+        return res.status(400).json({ success: false, message: 'Geçersiz kupon kodu' });
+      }
+      if (validCoupon.usedCount >= validCoupon.maxUses) {
+        return res.status(400).json({ success: false, message: 'Kupon kullanım limiti dolmuş' });
+      }
+      if (validCoupon.expiresAt && new Date() > validCoupon.expiresAt) {
+        return res.status(400).json({ success: false, message: 'Kupon süresi dolmuş' });
+      }
+
+      if (validCoupon.discountType === 'fixed') {
+        discountAmount = validCoupon.discountValue;
+      } else {
+        discountAmount = (productTotal * validCoupon.discountValue) / 100;
+      }
+      discountAmount = Math.min(discountAmount, productTotal);
+      discountAmount = parseFloat(discountAmount.toFixed(2));
+    }
+
+    const discountedProductTotal = productTotal - discountAmount;
+
+    // Sepet kalemleri (iyzico formatı) - indirim varsa oransal dusur
+    const discountRatio = productTotal > 0 ? discountedProductTotal / productTotal : 1;
     const basketItems = orderItems.map(item => ({
       id: item.product.toString(),
       name: item.productName,
       category1: 'Pet Mama',
       itemType: Iyzipay?.BASKET_ITEM_TYPE?.PHYSICAL || 'PHYSICAL',
-      price: item.subtotal.toFixed(2)
+      price: (item.subtotal * discountRatio).toFixed(2)
     }));
 
     // Kargo ücreti varsa sepete ekle
@@ -106,7 +136,13 @@ exports.initializeCheckoutForm = async (req, res) => {
       });
     }
 
-    const totalPrice = productTotal + shippingCost;
+    // Basket toplam yuvarlama farki duzeltmesi
+    const basketTotal = basketItems.reduce((s, b) => s + parseFloat(b.price), 0);
+    const totalPrice = discountedProductTotal + shippingCost;
+    const roundingDiff = parseFloat((totalPrice - basketTotal).toFixed(2));
+    if (Math.abs(roundingDiff) > 0 && basketItems.length > 0) {
+      basketItems[0].price = (parseFloat(basketItems[0].price) + roundingDiff).toFixed(2);
+    }
 
     // Sipariş oluştur (beklemede)
     const shippingAddressStr = `${shippingAddress.address}, ${shippingAddress.district}, ${shippingAddress.city} ${shippingAddress.postalCode || ''}`.trim();
@@ -117,6 +153,8 @@ exports.initializeCheckoutForm = async (req, res) => {
       totalPrice,
       shippingAddress: shippingAddressStr,
       shippingCost,
+      couponCode: validCoupon ? validCoupon.code : undefined,
+      discountAmount,
       paymentMethod: 'kredi_kartı',
       paymentStatus: 'beklemede',
       orderStatus: 'hazırlanıyor'
@@ -273,6 +311,14 @@ exports.checkoutFormCallback = async (req, res) => {
             await Product.findByIdAndUpdate(item.product, {
               $inc: { stockQuantity: -item.quantity }
             });
+          }
+
+          // Kupon kullanim sayisini artir
+          if (order.couponCode) {
+            await Coupon.findOneAndUpdate(
+              { code: order.couponCode },
+              { $inc: { usedCount: 1 } }
+            );
           }
 
           // WhatsApp bildirimi
