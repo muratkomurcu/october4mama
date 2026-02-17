@@ -53,8 +53,8 @@ exports.getProduct = async (req, res, next) => {
 // @access  Private/Admin
 exports.createProduct = async (req, res, next) => {
   try {
-    const { name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock } = req.body;
-    const product = await Product.create({ name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock });
+    const { name, category, ageGroup, price, weight, stockQuantity, description, image, images, nutritionalInfo, features, inStock } = req.body;
+    const product = await Product.create({ name, category, ageGroup, price, weight, stockQuantity, description, image, images, nutritionalInfo, features, inStock });
 
     res.status(201).json({
       success: true,
@@ -71,7 +71,7 @@ exports.createProduct = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, category, ageGroup, price, weight, stockQuantity, description, image, features, inStock } = req.body;
+    const { name, category, ageGroup, price, weight, stockQuantity, description, image, images, nutritionalInfo, features, inStock } = req.body;
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (category !== undefined) updateData.category = category;
@@ -81,6 +81,8 @@ exports.updateProduct = async (req, res, next) => {
     if (stockQuantity !== undefined) updateData.stockQuantity = stockQuantity;
     if (description !== undefined) updateData.description = description;
     if (image !== undefined) updateData.image = image;
+    if (images !== undefined) updateData.images = images;
+    if (nutritionalInfo !== undefined) updateData.nutritionalInfo = nutritionalInfo;
     if (features !== undefined) updateData.features = features;
     if (inStock !== undefined) updateData.inStock = inStock;
 

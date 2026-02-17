@@ -29,9 +29,18 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Ürün görseli gereklidir']
   },
+  images: [{
+    type: String
+  }],
   description: {
     type: String,
     required: [true, 'Ürün açıklaması gereklidir']
+  },
+  nutritionalInfo: {
+    protein: String,
+    fat: String,
+    cellulose: String,
+    ash: String
   },
   features: [{
     type: String
