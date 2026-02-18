@@ -7,8 +7,16 @@ const externalSaleSchema = new mongoose.Schema({
   },
   platform: {
     type: String,
-    enum: ['Trendyol', 'Hepsiburada', 'Mağaza', 'Diğer'],
+    enum: ['Trendyol', 'Hepsiburada', 'Mağaza', 'Elden Satış'],
     required: [true, 'Platform gerekli']
+  },
+  isCredit: {
+    type: Boolean,
+    default: false
+  },
+  isPaid: {
+    type: Boolean,
+    default: false
   },
   purchasePrice: {
     type: Number,
