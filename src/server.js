@@ -167,6 +167,66 @@ app.post('/api/email/check-abandoned', protect, admin, async (req, res) => {
   }
 });
 
+// ── Meta Commerce Manager ürün feed'i (XML) ──────────────────────────────────
+// URL: https://october4mama.onrender.com/api/meta-feed
+const Product = require('./models/Product');
+
+app.get('/api/meta-feed', async (req, res) => {
+  try {
+    const products = await Product.find({ inStock: true });
+
+    const esc = (s = '') => String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const items = products.map(p => {
+      const isKedi = p.category === 'kedi';
+      const offerId = `OCT4-${isKedi ? 'CAT' : 'DOG'}-${p._id.toString().slice(-6).toUpperCase()}`;
+      const googleCat = isKedi
+        ? 'Evcil Hayvan Malzemeleri > Kedi Malzemeleri > Kedi Maması > Kuru Mama'
+        : 'Evcil Hayvan Malzemeleri > Köpek Malzemeleri > Köpek Maması > Kuru Mama';
+      const cleanDesc = esc(p.description.replace(/✔/g, '').replace(/\s+/g, ' ').trim());
+      const title = esc(`${p.name} – Tahılsız, ${p.weight}`).slice(0, 150);
+
+      return `    <item>
+      <g:id>${offerId}</g:id>
+      <g:title>${title}</g:title>
+      <g:description>${cleanDesc}</g:description>
+      <g:link>https://october4mama.tr/product/${p._id}</g:link>
+      <g:image_link>${esc(p.image)}</g:image_link>
+      <g:availability>${p.inStock ? 'in_stock' : 'out_of_stock'}</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>${p.price} TRY</g:price>
+      <g:brand>October4</g:brand>
+      <g:google_product_category>${esc(googleCat)}</g:google_product_category>
+      <g:product_type>${isKedi ? 'Kedi Maması' : 'Köpek Maması'} &gt; Tahılsız</g:product_type>
+      <g:shipping>
+        <g:country>TR</g:country>
+        <g:service>Ücretsiz Kargo</g:service>
+        <g:price>0 TRY</g:price>
+      </g:shipping>
+    </item>`;
+    }).join('\n');
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>October4 Pet Food Ürün Kataloğu</title>
+    <link>https://october4mama.tr</link>
+    <description>October4 Kedi ve Köpek Maması – Tahılsız Premium Mama</description>
+${items}
+  </channel>
+</rss>`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
