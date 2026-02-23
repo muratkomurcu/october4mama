@@ -17,6 +17,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const externalSaleRoutes = require('./routes/externalSaleRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
+const spinWheelRoutes = require('./routes/spinWheelRoutes');
 
 // Express uygulaması
 const app = express();
@@ -111,6 +112,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/external-sales', externalSaleRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/expenses', expenseRoutes);
+app.use('/api/spin-wheel', spinWheelRoutes);
 
 // Admin: WhatsApp test mesajı gönder
 app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
