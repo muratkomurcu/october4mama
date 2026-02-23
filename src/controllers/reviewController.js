@@ -1,4 +1,5 @@
 const Review = require('../models/Review');
+const Order = require('../models/Order');
 
 // @desc    Ürünün yorumlarını getir
 // @route   GET /api/reviews/:productId
@@ -31,6 +32,20 @@ exports.getProductReviews = async (req, res, next) => {
 exports.createReview = async (req, res, next) => {
   try {
     const { rating, comment } = req.body;
+
+    // Satın alma kontrolü
+    const hasPurchased = await Order.findOne({
+      user: req.user._id,
+      'items.product': req.params.productId,
+      paymentStatus: 'ödendi'
+    });
+
+    if (!hasPurchased) {
+      return res.status(403).json({
+        success: false,
+        message: 'Yorum yapabilmek için bu ürünü satın almış olmanız gerekir.'
+      });
+    }
 
     // Duplikat yorum kontrolü
     const existing = await Review.findOne({
