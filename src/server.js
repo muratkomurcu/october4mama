@@ -18,6 +18,7 @@ const externalSaleRoutes = require('./routes/externalSaleRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const spinWheelRoutes = require('./routes/spinWheelRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 // Express uygulaması
 const app = express();
@@ -113,6 +114,7 @@ app.use('/api/external-sales', externalSaleRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/spin-wheel', spinWheelRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Admin: WhatsApp test mesajı gönder
 app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
@@ -196,7 +198,7 @@ app.get('/api/meta-feed', async (req, res) => {
       <g:id>${offerId}</g:id>
       <g:title>${title}</g:title>
       <g:description>${cleanDesc}</g:description>
-      <g:link>https://october4mama.tr/product/${p._id}</g:link>
+      <g:link>https://october4mama.tr/urun/${p.slug}</g:link>
       <g:image_link>${esc(p.image)}</g:image_link>
       <g:availability>${p.inStock ? 'in_stock' : 'out_of_stock'}</g:availability>
       <g:condition>new</g:condition>

@@ -4,6 +4,7 @@ const { protect, admin } = require('../middleware/auth');
 const {
   getProducts,
   getProduct,
+  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct
@@ -11,6 +12,7 @@ const {
 
 // Public routes
 router.get('/', getProducts);
+router.get('/slug/:slug', getProductBySlug); // slug route /:id'den ÖNCE olmalı
 router.get('/:id', getProduct);
 
 // Admin routes

@@ -55,7 +55,28 @@ const productSchema = new mongoose.Schema({
     min: [0, 'Stok miktarı 0\'dan küçük olamaz']
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+function turkishSlugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/ç/g, 'c')
+    .replace(/ğ/g, 'g')
+    .replace(/ı/g, 'i')
+    .replace(/i̇/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ş/g, 's')
+    .replace(/ü/g, 'u')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+productSchema.virtual('slug').get(function () {
+  return turkishSlugify(this.name);
 });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -25,6 +25,30 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
+// @desc    Slug ile ürün getir
+// @route   GET /api/products/slug/:slug
+// @access  Public
+exports.getProductBySlug = async (req, res, next) => {
+  try {
+    const products = await Product.find({});
+    const product = products.find(p => p.slug === req.params.slug);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ürün bulunamadı'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Tek bir ürünü getir
 // @route   GET /api/products/:id
 // @access  Public
