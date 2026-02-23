@@ -2,6 +2,76 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const User = require('../models/User');
+
+// @desc    Sipariş numarası + e-posta ile genel sorgulama (Public)
+// @route   POST /api/orders/track
+// @access  Public
+exports.trackOrder = async (req, res, next) => {
+  try {
+    const { orderNumber, email } = req.body;
+
+    if (!orderNumber || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Sipariş numarası ve e-posta adresi zorunludur.'
+      });
+    }
+
+    const order = await Order.findOne({
+      orderNumber: orderNumber.toUpperCase().trim(),
+      paymentStatus: { $ne: 'beklemede' }
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sipariş bulunamadı. Lütfen sipariş numaranızı kontrol edin.'
+      });
+    }
+
+    // E-posta doğrulama
+    const emailLower = email.toLowerCase().trim();
+    let emailMatches = false;
+
+    if (order.guestInfo?.email) {
+      emailMatches = order.guestInfo.email.toLowerCase() === emailLower;
+    }
+
+    if (!emailMatches && order.user) {
+      const owner = await User.findById(order.user).select('email');
+      if (owner) emailMatches = owner.email.toLowerCase() === emailLower;
+    }
+
+    if (!emailMatches) {
+      return res.status(403).json({
+        success: false,
+        message: 'E-posta adresi bu siparişe ait değil.'
+      });
+    }
+
+    const statusLabels = {
+      'hazırlanıyor':   '📦 Hazırlanıyor – Siparişiniz paketleniyor.',
+      'kargoda':        '🚚 Kargoda – Siparişiniz yola çıktı.',
+      'teslim edildi':  '✅ Teslim Edildi – Sipariş tamamlandı.',
+      'iptal':          '❌ İptal Edildi.'
+    };
+
+    res.json({
+      success: true,
+      data: {
+        orderNumber: order.orderNumber,
+        orderStatus: order.orderStatus,
+        orderStatusLabel: statusLabels[order.orderStatus] || order.orderStatus,
+        trackingNumber: order.trackingNumber || null,
+        totalPrice: order.totalPrice,
+        itemCount: order.items.length,
+        createdAt: order.createdAt
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 const { sendOrderNotification, sendStatusUpdateNotification } = require('../services/whatsappService');
 
 // @desc    Sipariş oluştur

@@ -7,10 +7,14 @@ const {
   getOrder,
   getAllOrders,
   getPendingOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  trackOrder
 } = require('../controllers/orderController');
 
-// Kullanıcı route'ları
+// Public: sipariş sorgulama (giriş gerektirmez)
+router.post('/track', trackOrder);
+
+// Bundan sonraki tüm route'lar auth gerektirir
 router.use(protect);
 router.post('/', createOrder);
 router.get('/', getMyOrders);
