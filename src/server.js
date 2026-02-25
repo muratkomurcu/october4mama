@@ -19,6 +19,7 @@ const couponRoutes = require('./routes/couponRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const spinWheelRoutes = require('./routes/spinWheelRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const petRoutes = require('./routes/petRoutes');
 
 // Express uygulaması
 const app = express();
@@ -115,6 +116,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/spin-wheel', spinWheelRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/pets', petRoutes);
 
 // Admin: WhatsApp test mesajı gönder
 app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
@@ -126,7 +128,7 @@ app.post('/api/whatsapp/test', protect, admin, async (req, res) => {
 });
 
 // Admin: Email test mesajı gönder
-const { sendEmail, checkAbandonedCartsAndOrders: runAbandonedCheck } = require('./services/emailService');
+const { sendEmail, checkAbandonedCartsAndOrders: runAbandonedCheck, checkPetReminders } = require('./services/emailService');
 app.post('/api/email/test', protect, admin, async (req, res) => {
   try {
     const toEmail = req.body.to || req.user.email;
@@ -166,6 +168,16 @@ app.post('/api/email/check-abandoned', protect, admin, async (req, res) => {
   try {
     await runAbandonedCheck();
     res.json({ success: true, message: 'Abandoned cart/order kontrolu tamamlandi.' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// Admin: Pet hatırlatıcılarını manuel tetikle
+app.post('/api/email/check-pet-reminders', protect, admin, async (req, res) => {
+  try {
+    await checkPetReminders();
+    res.json({ success: true, message: 'Pet hatirlatici kontrolu tamamlandi.' });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -254,6 +266,14 @@ cron.schedule('*/30 * * * *', () => {
   console.log('Abandoned cart/order kontrolu yapiliyor...');
   runAbandonedCheck().catch((err) => {
     console.error('Abandoned check hatasi:', err.message);
+  });
+});
+
+// Pet hatırlatıcıları (her gün 09:00 Türkiye saati = 06:00 UTC)
+cron.schedule('0 6 * * *', () => {
+  console.log('[PetReminder] Gunluk pet hatirlatici kontrolu basliyor...');
+  checkPetReminders().catch((err) => {
+    console.error('[PetReminder] Hata:', err.message);
   });
 });
 

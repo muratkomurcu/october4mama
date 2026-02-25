@@ -502,10 +502,319 @@ async function checkAbandonedCartsAndOrders() {
   }
 }
 
+// ===================== PET HATIRLATICI TEMPLATELER =====================
+
+function vaccinationReminderTemplate(ownerName, pet, vac, daysLeft) {
+  const dueDateStr = new Date(vac.nextDueDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const petEmoji = pet.petType === 'kedi' ? '🐱' : '🐶';
+  const urgencyColor = daysLeft <= 7 ? '#dc2626' : '#d97706';
+  const urgencyBg = daysLeft <= 7 ? '#fee2e2' : '#fef3c7';
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f0e8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f0e8;padding:20px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
+        ${emailHeader()}
+        <tr>
+          <td style="padding:30px 30px 10px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">💉</div>
+            <h2 style="margin:0;color:#333;font-size:20px;">Aşı Hatırlatıcısı</h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 30px;">
+            <p style="margin:0 0 16px;color:#555;font-size:15px;line-height:1.7;">
+              Merhaba <strong>${ownerName}</strong>,
+            </p>
+            <p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.7;">
+              ${petEmoji} <strong>${pet.petName}</strong>'ın <strong>${vac.name}</strong> aşısının zamanı yaklaşıyor.
+              Sevgili dostunuzun sağlığını korumak için aşı takibini ihmal etmeyin!
+            </p>
+            <table width="100%" style="background-color:${urgencyBg};border-radius:10px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:18px 24px;">
+                  <p style="margin:0 0 8px;font-size:13px;color:#888;">Aşı Adı</p>
+                  <p style="margin:0;font-size:17px;font-weight:bold;color:#333;">${vac.name}</p>
+                </td>
+                <td style="padding:18px 24px;text-align:right;">
+                  <p style="margin:0 0 8px;font-size:13px;color:#888;">Son Tarih</p>
+                  <p style="margin:0;font-size:17px;font-weight:bold;color:${urgencyColor};">${dueDateStr}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:${urgencyColor};">${daysLeft} gün kaldı</p>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 24px;color:#777;font-size:13px;line-height:1.6;">
+              Veterinerinizden randevu alarak ${pet.petName}'ı bu tarihe kadar aşılatmayı unutmayın.
+              Düzenli aşılama ${pet.petName}'ı birçok hastalıktan korur.
+            </p>
+            <div style="text-align:center;">
+              <a href="https://october4mama.tr/profil" style="display:inline-block;background-color:#4a7c59;color:#ffffff;padding:13px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:bold;">
+                Aşı Takibimi Görüntüle
+              </a>
+            </div>
+          </td>
+        </tr>
+        ${emailFooter()}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function treatmentReminderTemplate(ownerName, pet, treatment, daysLeft) {
+  const dueDateStr = new Date(treatment.nextDueDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const petEmoji = pet.petType === 'kedi' ? '🐱' : '🐶';
+  const urgencyColor = daysLeft <= 7 ? '#dc2626' : '#d97706';
+  const urgencyBg = daysLeft <= 7 ? '#fee2e2' : '#fef3c7';
+
+  const typeLabels = {
+    'pire': 'Pire Tedavisi',
+    'kene': 'Kene Tedavisi',
+    'iç parazit': 'İç Parazit Tedavisi',
+    'diğer': 'Parazit Tedavisi',
+  };
+  const typeLabel = typeLabels[treatment.type] || 'Parazit Tedavisi';
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f0e8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f0e8;padding:20px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
+        ${emailHeader()}
+        <tr>
+          <td style="padding:30px 30px 10px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">🛡️</div>
+            <h2 style="margin:0;color:#333;font-size:20px;">Parazit Tedavisi Hatırlatıcısı</h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 30px;">
+            <p style="margin:0 0 16px;color:#555;font-size:15px;line-height:1.7;">
+              Merhaba <strong>${ownerName}</strong>,
+            </p>
+            <p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.7;">
+              ${petEmoji} <strong>${pet.petName}</strong>'ın <strong>${typeLabel}</strong> zamanı yaklaşıyor.
+              Düzenli parazit tedavisi ${pet.petName}'ı hem mutlu hem sağlıklı tutar!
+            </p>
+            <table width="100%" style="background-color:${urgencyBg};border-radius:10px;margin-bottom:24px;">
+              <tr>
+                <td style="padding:18px 24px;">
+                  <p style="margin:0 0 8px;font-size:13px;color:#888;">Tedavi Türü</p>
+                  <p style="margin:0;font-size:17px;font-weight:bold;color:#333;">${typeLabel}</p>
+                </td>
+                <td style="padding:18px 24px;text-align:right;">
+                  <p style="margin:0 0 8px;font-size:13px;color:#888;">Tarih</p>
+                  <p style="margin:0;font-size:17px;font-weight:bold;color:${urgencyColor};">${dueDateStr}</p>
+                  <p style="margin:4px 0 0;font-size:13px;color:${urgencyColor};">${daysLeft} gün kaldı</p>
+                </td>
+              </tr>
+            </table>
+            <div style="text-align:center;">
+              <a href="https://october4mama.tr/profil" style="display:inline-block;background-color:#4a7c59;color:#ffffff;padding:13px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:bold;">
+                Tedavi Takibimi Görüntüle
+              </a>
+            </div>
+          </td>
+        </tr>
+        ${emailFooter()}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function birthdayTemplate(ownerName, pet) {
+  const petEmoji = pet.petType === 'kedi' ? '🐱' : '🐶';
+  const age = pet.petAge || Math.floor((new Date() - new Date(pet.birthDate)) / (365.25 * 86400000));
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f0e8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f0e8;padding:20px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
+        ${emailHeader()}
+        <tr>
+          <td style="padding:30px 30px 10px;text-align:center;">
+            <div style="font-size:56px;margin-bottom:8px;">🎂</div>
+            <h2 style="margin:0;color:#4a7c59;font-size:24px;">Mutlu Yıllar ${pet.petName}! ${petEmoji}</h2>
+            <p style="margin:8px 0 0;color:#888;font-size:14px;">${age} yaşına girdi!</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 30px;">
+            <p style="margin:0 0 16px;color:#555;font-size:15px;line-height:1.7;">
+              Merhaba <strong>${ownerName}</strong>,
+            </p>
+            <p style="margin:0 0 20px;color:#555;font-size:15px;line-height:1.7;">
+              Bugün ${petEmoji} <strong>${pet.petName}</strong>'ın doğum günü! 🎉
+              Bu özel günü birlikte kutlamak istedik. ${pet.petName}'a uzun, sağlıklı ve
+              mutlu bir hayat diliyoruz.
+            </p>
+            <table width="100%" style="background-color:#f0faf4;border-radius:10px;margin-bottom:24px;border:2px dashed #4a7c59;">
+              <tr>
+                <td style="padding:20px 24px;text-align:center;">
+                  <p style="margin:0 0 6px;font-size:13px;color:#4a7c59;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">Doğum Günü Sürprizi</p>
+                  <p style="margin:0 0 10px;font-size:28px;font-weight:bold;color:#333;letter-spacing:2px;">%15 İNDİRİM</p>
+                  <p style="margin:0;font-size:13px;color:#666;">Bugün yapacağınız alışverişte geçerlidir.<br>Siteye giriş yapınız, indirim otomatik uygulanır.</p>
+                </td>
+              </tr>
+            </table>
+            <div style="text-align:center;">
+              <a href="https://october4mama.tr" style="display:inline-block;background-color:#4a7c59;color:#ffffff;padding:13px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:bold;">
+                ${pet.petName} İçin Alışveriş Yap 🛒
+              </a>
+            </div>
+          </td>
+        </tr>
+        ${emailFooter()}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ===================== CRON: PET REMINDER CHECKER =====================
+
+/**
+ * Her gün 09:00 TR saatinde çalışır.
+ * - Aşı tarihi 15 gün içinde olan hayvanlar → email
+ * - Tedavi tarihi 15 gün içinde olan hayvanlar → email
+ * - Bugün doğum günü olan hayvanlar → kutlama emaili
+ * Aynı hatırlatma 7 gün içinde tekrar gönderilmez.
+ */
+async function checkPetReminders() {
+  const Pet = require('../models/Pet');
+  const User = require('../models/User');
+
+  const now = new Date();
+  const sevenDaysAgo = new Date(now - 7 * 86400000);
+  const fifteenDaysLater = new Date(now.getTime() + 15 * 86400000);
+  const currentYear = now.getFullYear();
+  const todayMonth = now.getMonth() + 1; // 1-12
+  const todayDay = now.getDate();
+
+  console.log('[PetReminder] Kontrol basliyor...');
+
+  try {
+    const pets = await Pet.find({
+      $or: [
+        { 'vaccinations.nextDueDate': { $gte: now, $lte: fifteenDaysLater } },
+        { 'treatments.nextDueDate': { $gte: now, $lte: fifteenDaysLater } },
+        { birthDate: { $exists: true, $ne: null } },
+      ]
+    });
+
+    for (const pet of pets) {
+      // Kullanıcı emailini al
+      const user = await User.findById(pet.user).select('fullName email');
+      if (!user?.email) continue;
+
+      let petModified = false;
+
+      // ── Aşı Hatırlatıcıları ──────────────────────────────
+      for (const vac of pet.vaccinations) {
+        if (!vac.nextDueDate) continue;
+        const due = new Date(vac.nextDueDate);
+        if (due < now || due > fifteenDaysLater) continue;
+
+        // 7 gün içinde zaten gönderilmişse atla
+        if (vac.reminderSentAt && new Date(vac.reminderSentAt) > sevenDaysAgo) continue;
+
+        const daysLeft = Math.ceil((due - now) / 86400000);
+        const html = vaccinationReminderTemplate(user.fullName, pet, vac, daysLeft);
+
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: `${pet.petName}'ın ${vac.name} aşısı ${daysLeft} gün sonra! 💉`,
+            html,
+          });
+          vac.reminderSentAt = new Date();
+          petModified = true;
+          console.log(`[PetReminder] Asi hatirlatici: ${user.email} - ${pet.petName} - ${vac.name}`);
+        } catch (e) {
+          console.error(`[PetReminder] Asi email hatasi: ${e.message}`);
+        }
+      }
+
+      // ── Tedavi Hatırlatıcıları ──────────────────────────
+      for (const trt of pet.treatments) {
+        if (!trt.nextDueDate) continue;
+        const due = new Date(trt.nextDueDate);
+        if (due < now || due > fifteenDaysLater) continue;
+
+        if (trt.reminderSentAt && new Date(trt.reminderSentAt) > sevenDaysAgo) continue;
+
+        const daysLeft = Math.ceil((due - now) / 86400000);
+        const html = treatmentReminderTemplate(user.fullName, pet, trt, daysLeft);
+
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: `${pet.petName}'ın parazit tedavisi ${daysLeft} gün sonra! 🛡️`,
+            html,
+          });
+          trt.reminderSentAt = new Date();
+          petModified = true;
+          console.log(`[PetReminder] Tedavi hatirlatici: ${user.email} - ${pet.petName} - ${trt.type}`);
+        } catch (e) {
+          console.error(`[PetReminder] Tedavi email hatasi: ${e.message}`);
+        }
+      }
+
+      // ── Doğum Günü ────────────────────────────────────
+      if (pet.birthDate) {
+        const bDate = new Date(pet.birthDate);
+        const bMonth = bDate.getMonth() + 1;
+        const bDay = bDate.getDate();
+
+        if (bMonth === todayMonth && bDay === todayDay && pet.birthdayReminderSentYear !== currentYear) {
+          // birthDate varsa yaşı hesapla, yoksa petAge kullan
+          const html = birthdayTemplate(user.fullName, pet);
+          try {
+            await sendEmail({
+              to: user.email,
+              subject: `🎂 Mutlu Yıllar ${pet.petName}! October 4'ten doğum günü sürprizi`,
+              html,
+            });
+            pet.birthdayReminderSentYear = currentYear;
+            petModified = true;
+            console.log(`[PetReminder] Dogum gunu emaili: ${user.email} - ${pet.petName}`);
+          } catch (e) {
+            console.error(`[PetReminder] Dogum gunu email hatasi: ${e.message}`);
+          }
+        }
+      }
+
+      if (petModified) {
+        await pet.save();
+      }
+    }
+
+    console.log(`[PetReminder] Kontrol tamamlandi. ${pets.length} hayvan incelendi.`);
+  } catch (error) {
+    console.error('[PetReminder] Genel hata:', error.message);
+  }
+}
+
 module.exports = {
   sendEmail,
   sendOrderConfirmationEmail,
   sendAbandonedCartEmail,
   sendAbandonedOrderEmail,
   checkAbandonedCartsAndOrders,
+  checkPetReminders,
 };

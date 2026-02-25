@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+const vaccinationSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  date: { type: Date, required: true },
+  nextDueDate: { type: Date },
+  reminderSentAt: { type: Date } // son hatırlatma gönderilme tarihi
+}, { _id: true });
+
+const treatmentSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    required: true,
+    enum: ['pire', 'kene', 'iç parazit', 'diğer']
+  },
+  date: { type: Date, required: true },
+  nextDueDate: { type: Date },
+  reminderSentAt: { type: Date } // son hatırlatma gönderilme tarihi
+}, { _id: true });
+
 const petSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -32,7 +50,20 @@ const petSchema = new mongoose.Schema({
     required: [true, 'Hayvanın yaşı gereklidir'],
     min: [0, 'Yaş 0\'dan küçük olamaz'],
     max: [30, 'Yaş 30\'dan büyük olamaz']
-  }
+  },
+  // Genişletilmiş alanlar
+  birthDate: { type: Date },
+  gender: {
+    type: String,
+    enum: ['erkek', 'dişi', 'bilinmiyor'],
+    default: 'bilinmiyor'
+  },
+  isNeutered: { type: Boolean, default: false },
+  photo: { type: String }, // Cloudinary URL
+  healthNotes: { type: String, trim: true, maxlength: 500 },
+  vaccinations: [vaccinationSchema],
+  treatments: [treatmentSchema],
+  birthdayReminderSentYear: { type: Number } // doğum günü emailinin gönderildiği yıl
 }, {
   timestamps: true
 });
