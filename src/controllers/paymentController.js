@@ -104,12 +104,25 @@ exports.initializeCheckoutForm = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Kupon süresi dolmuş' });
       }
 
+      // Urun bazli kupon kontrolu
+      let eligibleTotal = productTotal;
+      if (validCoupon.appliesTo === 'specific' && validCoupon.applicableProducts.length > 0) {
+        const couponProductIds = validCoupon.applicableProducts.map(id => id.toString());
+        const eligibleItems = orderItems.filter(item =>
+          couponProductIds.includes(item.product.toString())
+        );
+        if (eligibleItems.length === 0) {
+          return res.status(400).json({ success: false, message: 'Bu kupon sepetinizdeki ürünler için geçerli değil' });
+        }
+        eligibleTotal = eligibleItems.reduce((sum, item) => sum + item.subtotal, 0);
+      }
+
       if (validCoupon.discountType === 'fixed') {
         discountAmount = validCoupon.discountValue;
       } else {
-        discountAmount = (productTotal * validCoupon.discountValue) / 100;
+        discountAmount = (eligibleTotal * validCoupon.discountValue) / 100;
       }
-      discountAmount = Math.min(discountAmount, productTotal);
+      discountAmount = Math.min(discountAmount, eligibleTotal);
       discountAmount = parseFloat(discountAmount.toFixed(2));
     }
 

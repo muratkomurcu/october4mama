@@ -75,7 +75,7 @@ exports.deleteCoupon = async (req, res, next) => {
 // Public: Kupon dogrula
 exports.validateCoupon = async (req, res, next) => {
   try {
-    const { code, cartTotal } = req.body;
+    const { code, cartTotal, cartItems } = req.body;
 
     if (!code) {
       return res.status(400).json({
@@ -114,16 +114,35 @@ exports.validateCoupon = async (req, res, next) => {
       });
     }
 
+    // Urun bazli kupon kontrolu
+    let eligibleTotal = cartTotal;
+    if (coupon.appliesTo === 'specific' && coupon.applicableProducts.length > 0) {
+      if (!cartItems || cartItems.length === 0) {
+        return res.status(400).json({ success: false, message: 'Sepet bilgisi gerekli' });
+      }
+      const couponProductIds = coupon.applicableProducts.map(id => id.toString());
+      const eligibleItems = cartItems.filter(item =>
+        couponProductIds.includes((item.productId || item._id || '').toString())
+      );
+      if (eligibleItems.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bu kupon sepetinizdeki ürünler için geçerli değil'
+        });
+      }
+      eligibleTotal = eligibleItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
     // Indirim miktarini hesapla
     let discountAmount = 0;
     if (coupon.discountType === 'fixed') {
       discountAmount = coupon.discountValue;
     } else {
-      discountAmount = (cartTotal * coupon.discountValue) / 100;
+      discountAmount = (eligibleTotal * coupon.discountValue) / 100;
     }
 
-    // Indirim sepet toplamini gecemez
-    discountAmount = Math.min(discountAmount, cartTotal);
+    // Indirim uygun urun toplamini gecemez
+    discountAmount = Math.min(discountAmount, eligibleTotal);
 
     res.json({
       success: true,
@@ -133,7 +152,8 @@ exports.validateCoupon = async (req, res, next) => {
         discountType: coupon.discountType,
         discountValue: coupon.discountValue,
         discountAmount: parseFloat(discountAmount.toFixed(2)),
-        remainingUses: coupon.maxUses - coupon.usedCount
+        remainingUses: coupon.maxUses - coupon.usedCount,
+        appliesTo: coupon.appliesTo
       }
     });
   } catch (error) {

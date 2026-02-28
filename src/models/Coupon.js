@@ -34,7 +34,16 @@ const couponSchema = new mongoose.Schema({
   expiresAt: {
     type: Date,
     default: null
-  }
+  },
+  appliesTo: {
+    type: String,
+    enum: ['all', 'specific'],
+    default: 'all'
+  },
+  applicableProducts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }]
 }, {
   timestamps: true
 });
